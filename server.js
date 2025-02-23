@@ -21,16 +21,24 @@ const servePage = (url, res) => {
 }
 
 const serveStyles = (req, res) => {
-    const data = readFile('style.css', './styles/');
+    const fileName = req.url.replace('/styles/', '');
+    const data = readFile(fileName, './styles/');
     res.writeHead(200, { 'Content-Type': 'text/css' });
     res.write(data);
     console.log('serving style.css');
     return res.end();
 }
 
-const sendInvalidReqResponse = (req, res) => {
-    servePage('/invalidReq', res);
+const serveFavicon = (res) => {
+    const data = readFile('favicon.png', './images/');
+    res.writeHead(200, { 'Content-Type': 'image/x-icon' });
+    res.write(data);
+    console.log('serving favicon');
+    return res.end();
 }
+
+const sendInvalidReqResponse = (req, res) => servePage('/invalidReq', res);
+
 
 const isPageRequest = (url) => url.startsWith('/pages');
 const isReqForFavicon = (url) => url === '/favicon.ico';
@@ -42,18 +50,14 @@ const handlePageReq = (req, res) => {
         servePage(pageName, res) : sendInvalidReqResponse(req, res);
 }
 
-const serveFavicon = (res) => {
-    const data = readFile('favicon.png', './images/');
-    res.writeHead(200, { 'Content-Type': 'image/x-icon' });
-    res.write(data);
-    console.log('serving favicon');
-    return res.end();
-}
-
 const main = () => {
     http.createServer((req, res) => {
         logger(req, res);
-        console.log({ isPageRequest: isPageRequest(req.url) });
+        console.log({
+            isPageRequest: isPageRequest(req.url),
+            isReqForStyles: isReqForStyles(req.url),
+            isReqForFavicon: isReqForFavicon(req.url)
+        });
 
         if (isPageRequest(req.url)) return handlePageReq(req, res);
         if (isReqForStyles(req.url)) return serveStyles(req, res);
